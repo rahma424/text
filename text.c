@@ -1,85 +1,88 @@
 #include <stdio.h>
+#include <string.h>
+
+#define MAX_USERS 100
+#define MAX_USERNAME_LENGTH 20
+#define MAX_PASSWORD_LENGTH 20
 
 struct User {
-    char username[20];
-    char password[20];
+    char username[MAX_USERNAME_LENGTH];
+    char password[MAX_PASSWORD_LENGTH];
 };
 
-void registerUser() {
-    struct User newUser;
-    FILE *file = fopen("users.txt", "a"); 
+union UserDetails {
+    struct User user;
+    int isActive; // Flag to indicate whether the user is active (1) or not (0)
+};
 
-    if (file == NULL) {
-        perror("Error opening file");
-        exit(1);
+union UserDetails users[MAX_USERS];
+int numUsers = 0;
+
+int registerUser() {
+    if (numUsers >= MAX_USERS) {
+        printf("Maximum number of users reached.\n");
+        return 0;
     }
 
-    printf("Enter a username: ");
-    scanf("%s", newUser.username);
-    printf("Enter a password: ");
-    scanf("%s", newUser.password);
+    printf("Enter username: ");
+    scanf("%s", users[numUsers].user.username);
 
-    fprintf(file, "%s %s\n", newUser.username, newUser.password);
-    fclose(file);
-    printf("Regist successful!\n");
+    printf("Enter password: ");
+    scanf("%s", users[numUsers].user.password);
+
+    printf("Set isActive flag (1 for true, 0 for false): ");
+    scanf("%d", &users[numUsers].isActive);
+
+    numUsers++;
+    printf("Registration successful.\n");
+    return 1;
 }
 
-int checkUser(char *username, char *password) {
-    struct User user;
-    FILE *file = fopen("users.txt", "r");
+int loginUser() {
+    char username[MAX_USERNAME_LENGTH];
+    char password[MAX_PASSWORD_LENGTH];
 
-    if (file == NULL) {
-        perror("Error opening");
-        exit(1);
-    }
+    printf("Enter username: ");
+    scanf("%s", username);
 
-    while (fscanf(file, "%s %s", user.username, user.password) != EOF) {
-        if (strcmp(username, user.username) == 0 && strcmp(password, user.password) == 0) {
-            fclose(file);
+    printf("Enter password: ");
+    scanf("%s", password);
+
+    for (int i = 0; i < numUsers; i++) {
+        if (strcmp(username, users[i].user.username) == 0 &&
+            strcmp(password, users[i].user.password) == 0 &&
+            users[i].isActive) { // Check if the user is active
+            printf("Login successful.\n");
             return 1;
         }
     }
 
-    fclose(file);
+    printf("Invalid username or password, or user is not active.\n");
     return 0;
 }
 
 int main() {
     int choice;
-    char username[20];
-    char password[20];
 
-    while (1) {
-        printf("1. Register\n2. Login\n3. Exit\nEnter your choice: ");
+    do {
+        printf("Enter 1 to Register:\n");
+        printf("Enter 2 to Login:\n");
+        printf("Enter your choice: ");
         scanf("%d", &choice);
 
         switch (choice) {
             case 1:
                 registerUser();
                 break;
-
             case 2:
-                printf("Enter username: ");
-                scanf("%s", username);
-                printf("Enter password: ");
-                scanf("%s", password);
-
-                if (checkUser(username, password)) {
-                    printf("Login successful!\n");
-                } else {
-                    printf("Login failed. Invalid username or password.\n");
-                }
+                loginUser();
                 break;
-
-            case 3:
-                printf("Exiting program.\n");
-                exit(0);
-
             default:
-                printf("Invalid choice. Try again.\n");
-                break;
+                printf("Invalid choice. Please try again.\n");
         }
-    }
+
+        printf("\n");
+    } while (choice);
 
     return 0;
 }
